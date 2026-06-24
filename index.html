@@ -1,0 +1,647 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>简单英语 - Basic English</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+:root { --green: #58cc02; --green-dark: #46a302; --blue: #1cb0f6; --blue-dark: #1899d6; --red: #ff4b4b; --gold: #ffc800; --bg: #f5f5f5; --card: #fff; --text: #333; --text-light: #777; --border: #e5e5e5; --radius: 16px; }
+body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+/* Header */
+.header { background: linear-gradient(135deg, #1cb0f6, #58cc02); padding: 12px 20px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+.header-title { color: #fff; font-size: 20px; font-weight: 800; letter-spacing: -0.5px; display: flex; align-items: center; gap: 8px; }
+.header-title .logo { font-size: 28px; }
+.header-right { display: flex; align-items: center; gap: 16px; }
+.xp-badge { background: rgba(255,255,255,0.2); color: #fff; padding: 4px 12px; border-radius: 20px; font-size: 13px; font-weight: 700; display: flex; align-items: center; gap: 4px; }
+.streak-badge { background: rgba(255,255,255,0.2); color: #fff; padding: 4px 12px; border-radius: 20px; font-size: 13px; font-weight: 700; display: flex; align-items: center; gap: 4px; }
+.level-badge { background: var(--gold); color: #333; padding: 4px 12px; border-radius: 20px; font-size: 13px; font-weight: 700; }
+/* Screens */
+.screen { display: none; animation: fadeIn 0.3s ease; padding-bottom: 80px; }
+.screen.active { display: block; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes slideUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes bounce { 0%,100% { transform: scale(1); } 50% { transform: scale(1.05); } }
+@keyframes confetti { 0% { transform: translateY(0) rotate(0); opacity: 1; } 100% { transform: translateY(-100px) rotate(720deg); opacity: 0; } }
+@keyframes pulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.03); } }
+/* Home Screen */
+.home-header { text-align: center; padding: 24px 20px 8px; }
+.home-header h2 { font-size: 22px; font-weight: 800; color: var(--text); }
+.home-header p { color: var(--text-light); font-size: 14px; margin-top: 4px; }
+.stats-row { display: flex; justify-content: center; gap: 20px; padding: 16px 20px; }
+.stat-card { background: var(--card); border-radius: var(--radius); padding: 12px 20px; text-align: center; box-shadow: 0 1px 4px rgba(0,0,0,0.06); flex: 1; max-width: 140px; }
+.stat-card .num { font-size: 24px; font-weight: 800; }
+.stat-card .label { font-size: 12px; color: var(--text-light); margin-top: 2px; }
+.stat-card.xp .num { color: var(--gold); }
+.stat-card.streak .num { color: var(--red); }
+.stat-card.lessons .num { color: var(--blue); }
+/* Lesson Map */
+.lesson-map { max-width: 600px; margin: 0 auto; padding: 8px 16px; }
+.lesson-node { background: var(--card); border: 2px solid var(--border); border-radius: var(--radius); padding: 14px 18px; margin-bottom: 10px; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; gap: 14px; position: relative; }
+.lesson-node:hover { border-color: var(--blue); transform: translateX(4px); }
+.lesson-node.locked { opacity: 0.5; cursor: not-allowed; }
+.lesson-node.locked:hover { transform: none; border-color: var(--border); }
+.lesson-node.completed { border-color: var(--green); background: #f0fdf4; }
+.lesson-node.current { border-color: var(--blue); animation: pulse 2s infinite; }
+.lesson-icon { width: 42px; height: 42px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0; background: var(--bg); }
+.lesson-node.completed .lesson-icon { background: var(--green); color: #fff; }
+.lesson-node.current .lesson-icon { background: var(--blue); color: #fff; }
+.lesson-node.locked .lesson-icon { background: var(--bg); color: #ccc; }
+.lesson-info { flex: 1; min-width: 0; }
+.lesson-info h4 { font-size: 14px; font-weight: 700; }
+.lesson-info p { font-size: 12px; color: var(--text-light); margin-top: 2px; }
+.lesson-info .progress-bar { height: 4px; background: var(--border); border-radius: 2px; margin-top: 6px; overflow: hidden; }
+.lesson-info .progress-fill { height: 100%; background: var(--green); border-radius: 2px; transition: width 0.5s; }
+.lesson-check { font-size: 18px; color: var(--green); }
+.lesson-lock { font-size: 16px; color: #ccc; }
+.lesson-arrow { color: var(--text-light); font-size: 14px; }
+/* Lesson Screen */
+.lesson-container { max-width: 560px; margin: 0 auto; padding: 20px 16px; }
+.lesson-header { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
+.back-btn { background: none; border: none; font-size: 24px; cursor: pointer; padding: 4px; color: var(--text); }
+.lesson-title { font-size: 16px; font-weight: 700; flex: 1; }
+.lesson-progress { flex: 1; height: 8px; background: var(--border); border-radius: 4px; overflow: hidden; }
+.lesson-progress-bar { height: 100%; background: linear-gradient(90deg, var(--blue), var(--green)); border-radius: 4px; transition: width 0.4s; }
+.hearts { display: flex; gap: 2px; }
+.hearts .heart { font-size: 20px; transition: all 0.3s; }
+.hearts .heart.lost { opacity: 0.2; transform: scale(0.8); }
+/* Exercise Card */
+.exercise-card { background: var(--card); border-radius: var(--radius); padding: 28px 24px; box-shadow: 0 2px 12px rgba(0,0,0,0.06); margin-bottom: 16px; }
+.exercise-prompt { text-align: center; margin-bottom: 24px; }
+.exercise-prompt .label { font-size: 12px; text-transform: uppercase; color: var(--text-light); font-weight: 700; letter-spacing: 1px; }
+.exercise-prompt .word { font-size: 36px; font-weight: 800; margin-top: 8px; color: var(--text); }
+.exercise-prompt .word-small { font-size: 24px; font-weight: 700; margin-top: 8px; }
+.listen-btn { background: var(--blue); color: #fff; border: none; padding: 10px 20px; border-radius: 50px; font-size: 15px; font-weight: 700; cursor: pointer; margin-top: 12px; transition: all 0.2s; display: inline-flex; align-items: center; gap: 6px; }
+.listen-btn:hover { background: var(--blue-dark); transform: scale(1.02); }
+.listen-btn:active { transform: scale(0.98); }
+/* Choices */
+.choices { display: grid; gap: 10px; }
+.choice-btn { background: var(--card); border: 2px solid var(--border); border-radius: 12px; padding: 14px 18px; font-size: 16px; cursor: pointer; transition: all 0.2s; text-align: left; font-weight: 600; }
+.choice-btn:hover { border-color: var(--blue); background: #f0f8ff; }
+.choice-btn:active { transform: scale(0.98); }
+.choice-btn.selected { border-color: var(--blue); background: #e8f4fd; }
+.choice-btn.correct { border-color: var(--green); background: #e8faf0; animation: bounce 0.3s; }
+.choice-btn.wrong { border-color: var(--red); background: #ffe8e8; }
+.choice-btn.reveal { border-color: var(--green); background: #e8faf0; }
+/* Writing Input */
+.writing-area { text-align: center; }
+.writing-input { width: 100%; padding: 14px 18px; font-size: 22px; border: 2px solid var(--border); border-radius: 12px; text-align: center; font-weight: 700; outline: none; transition: border-color 0.2s; }
+.writing-input:focus { border-color: var(--blue); }
+.writing-input.correct { border-color: var(--green); background: #e8faf0; }
+.writing-input.wrong { border-color: var(--red); background: #ffe8e8; }
+.submit-btn { background: var(--blue); color: #fff; border: none; border-radius: 12px; padding: 10px 24px; font-size: 15px; font-weight: 700; cursor: pointer; margin-top: 8px; transition: all 0.2s; display: inline-flex; align-items: center; gap: 6px; }
+.submit-btn:hover { background: var(--blue-dark); transform: translateY(-1px); }
+.submit-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+/* Next Button */
+.next-btn { width: 100%; padding: 14px; border: none; border-radius: 12px; font-size: 16px; font-weight: 800; cursor: pointer; transition: all 0.2s; margin-top: 12px; }
+.next-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.next-btn.primary { background: var(--green); color: #fff; }
+.next-btn.primary:not(:disabled):hover { background: var(--green-dark); transform: translateY(-1px); }
+.next-btn.primary:not(:disabled):active { transform: translateY(0); }
+/* Result Screen */
+.result-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.4); display: none; justify-content: center; align-items: center; z-index: 200; padding: 20px; }
+.result-overlay.show { display: flex; }
+.result-card { background: var(--card); border-radius: 20px; padding: 36px 28px; text-align: center; max-width: 400px; width: 100%; animation: slideUp 0.4s ease; box-shadow: 0 20px 60px rgba(0,0,0,0.15); }
+.result-icon { font-size: 64px; margin-bottom: 12px; }
+.result-score { font-size: 48px; font-weight: 800; color: var(--green); }
+.result-label { font-size: 18px; font-weight: 700; margin: 4px 0 12px; }
+.result-detail { color: var(--text-light); font-size: 14px; margin-bottom: 20px; }
+.result-stats { display: flex; justify-content: center; gap: 24px; margin-bottom: 20px; }
+.result-stat { text-align: center; }
+.result-stat .num { font-size: 22px; font-weight: 800; }
+.result-stat .num.green { color: var(--green); }
+.result-stat .num.red { color: var(--red); }
+.result-stat .label { font-size: 12px; color: var(--text-light); }
+.xp-earned { background: linear-gradient(135deg, var(--gold), #ff9500); color: #fff; display: inline-block; padding: 6px 20px; border-radius: 50px; font-size: 18px; font-weight: 800; margin-bottom: 16px; }
+/* Confetti */
+.confetti-container { position: fixed; top: 0; left: 0; right: 0; bottom: 0; pointer-events: none; z-index: 300; overflow: hidden; }
+.confetti-piece { position: absolute; width: 10px; height: 10px; top: 50%; left: 50%; animation: confetti 1.5s ease-out forwards; }
+/* Responsive */
+@media (max-width: 480px) {
+  .exercise-card { padding: 20px 16px; }
+  .exercise-prompt .word { font-size: 28px; }
+  .stats-row { gap: 12px; }
+  .stat-card { padding: 10px 14px; }
+  .result-card { padding: 28px 20px; }
+}
+/* Scrollbar */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #ccc; border-radius: 3px; }
+/* Empty state */
+.empty-state { text-align: center; padding: 60px 20px; }
+.empty-state .icon { font-size: 48px; margin-bottom: 12px; }
+.empty-state p { color: var(--text-light); }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-title"><span class="logo">&#127891;</span> 简单英语</div>
+  <div class="header-right">
+    <div class="streak-badge">&#128293; <span id="streakDisplay">0</span></div>
+    <div class="xp-badge">&#11088; <span id="xpDisplay">0</span></div>
+    <div class="level-badge" id="levelDisplay">Lv.1</div>
+  </div>
+</div>
+
+<!-- Home Screen -->
+<div class="screen active" id="homeScreen">
+  <div class="home-header">
+    <h2>&#127758; 继续学习</h2>
+    <p>每天进步一点点</p>
+  </div>
+  <div class="stats-row">
+    <div class="stat-card xp"><div class="num" id="homeXp">0</div><div class="label">总经验</div></div>
+    <div class="stat-card streak"><div class="num" id="homeStreak">0</div><div class="label">连续天数</div></div>
+    <div class="stat-card lessons"><div class="num" id="homeLessons">0</div><div class="label">已完成</div></div>
+  </div>
+  <div class="lesson-map" id="lessonMap"></div>
+</div>
+
+<!-- Lesson Screen -->
+<div class="screen" id="lessonScreen">
+  <div class="lesson-container">
+    <div class="lesson-header">
+      <button class="back-btn" onclick="quitLesson()">&#x2716;</button>
+      <div class="lesson-title" id="lessonTitle">第 1 课</div>
+      <div class="lesson-progress"><div class="lesson-progress-bar" id="lessonProgress" style="width:0%"></div></div>
+      <div class="hearts" id="heartsDisplay">
+        <span class="heart">&#128147;</span>
+        <span class="heart">&#128147;</span>
+        <span class="heart">&#128147;</span>
+        <span class="heart">&#128147;</span>
+        <span class="heart">&#128147;</span>
+      </div>
+    </div>
+    <div id="exerciseContainer"></div>
+  </div>
+</div>
+
+<!-- Result Overlay -->
+<div class="result-overlay" id="resultOverlay">
+  <div class="result-card">
+    <div class="result-icon" id="resultIcon">&#127881;</div>
+    <div class="xp-earned" id="xpEarned">+0 XP</div>
+    <div class="result-label" id="resultLabel">做得好！</div>
+    <div class="result-stats">
+      <div class="result-stat"><div class="num green" id="correctCount">0</div><div class="label">正确</div></div>
+      <div class="result-stat"><div class="num red" id="wrongCount">0</div><div class="label">错误</div></div>
+    </div>
+    <button class="next-btn primary" onclick="closeResult()">继续</button>
+  </div>
+</div>
+
+<div class="confetti-container" id="confettiContainer"></div>
+
+<script>
+// ======== Lesson Data (from 850 Basic English) ========
+const LESSONS = [
+  { id: 1, title: '基本动词', words: [
+    ['come', '来'], ['go', '去'], ['get', '得到'], ['give', '给'],
+    ['take', '拿'], ['make', '做'], ['put', '放'], ['keep', '保持'],
+    ['let', '让'], ['do', '做/干']
+  ]},
+  { id: 2, title: '更多动词', words: [
+    ['say', '说'], ['see', '看'], ['send', '发送'], ['have', '有'],
+    ['be', '是'], ['seem', '似乎'], ['need', '需要'], ['like', '喜欢'],
+    ['want', '想要'], ['use', '使用']
+  ]},
+  { id: 3, title: '日常动作', words: [
+    ['eat', '吃'], ['drink', '喝'], ['walk', '走'], ['run', '跑'],
+    ['sit', '坐'], ['stand', '站'], ['sleep', '睡觉'], ['wash', '洗'],
+    ['cook', '做饭'], ['clean', '打扫']
+  ]},
+  { id: 4, title: '感官与交流', words: [
+    ['hear', '听到'], ['listen', '听'], ['look', '看(主动)'], ['watch', '观看'],
+    ['speak', '说话'], ['talk', '交谈'], ['ask', '问'], ['answer', '回答'],
+    ['read', '阅读'], ['write', '写']
+  ]},
+  { id: 5, title: '介词与方位', words: [
+    ['in', '在...里'], ['on', '在...上'], ['under', '在...下'], ['over', '在...上方'],
+    ['near', '附近'], ['far', '远'], ['up', '向上'], ['down', '向下'],
+    ['to', '到/向'], ['from', '从']
+  ]},
+  { id: 6, title: '代词与冠词', words: [
+    ['I', '我'], ['you', '你/你们'], ['he', '他'], ['she', '她'],
+    ['it', '它'], ['we', '我们'], ['they', '他们'], ['this', '这个'],
+    ['that', '那个'], ['what', '什么']
+  ]},
+  { id: 7, title: '疑问与连接', words: [
+    ['who', '谁'], ['where', '哪里'], ['when', '何时'], ['why', '为什么'],
+    ['how', '如何'], ['which', '哪个'], ['and', '和'], ['but', '但是'],
+    ['or', '或者'], ['because', '因为']
+  ]},
+  { id: 8, title: '时间词', words: [
+    ['now', '现在'], ['today', '今天'], ['tomorrow', '明天'], ['yesterday', '昨天'],
+    ['morning', '早上'], ['afternoon', '下午'], ['evening', '晚上'], ['night', '夜晚'],
+    ['week', '周'], ['month', '月']
+  ]},
+  { id: 9, title: '基础形容词', words: [
+    ['good', '好的'], ['bad', '坏的'], ['big', '大的'], ['small', '小的'],
+    ['new', '新的'], ['old', '旧的/老的'], ['hot', '热的'], ['cold', '冷的'],
+    ['long', '长的'], ['short', '短的']
+  ]},
+  { id: 10, title: '更多形容词', words: [
+    ['fast', '快的'], ['slow', '慢的'], ['easy', '容易的'], ['hard', '困难的/硬的'],
+    ['clean', '干净的'], ['dirty', '脏的'], ['rich', '富有的'], ['poor', '贫穷的'],
+    ['happy', '快乐的'], ['sad', '伤心的']
+  ]},
+  { id: 11, title: '颜色与形状', words: [
+    ['red', '红色'], ['blue', '蓝色'], ['green', '绿色'], ['yellow', '黄色'],
+    ['white', '白色'], ['black', '黑色'], ['brown', '棕色'], ['grey', '灰色'],
+    ['round', '圆的'], ['square', '方的']
+  ]},
+  { id: 12, title: '食物与饮料', words: [
+    ['bread', '面包'], ['rice', '米饭'], ['meat', '肉'], ['fish', '鱼'],
+    ['fruit', '水果'], ['milk', '牛奶'], ['water', '水'], ['egg', '蛋'],
+    ['salt', '盐'], ['sugar', '糖']
+  ]},
+  { id: 13, title: '身体部位', words: [
+    ['head', '头'], ['face', '脸'], ['eye', '眼睛'], ['ear', '耳朵'],
+    ['mouth', '嘴'], ['hand', '手'], ['foot', '脚'], ['arm', '手臂'],
+    ['leg', '腿'], ['heart', '心脏']
+  ]},
+  { id: 14, title: '家庭与人', words: [
+    ['mother', '母亲'], ['father', '父亲'], ['sister', '姐妹'], ['brother', '兄弟'],
+    ['baby', '婴儿'], ['child', '孩子'], ['friend', '朋友'], ['family', '家庭'],
+    ['man', '男人'], ['woman', '女人']
+  ]},
+  { id: 15, title: '动物与自然', words: [
+    ['dog', '狗'], ['cat', '猫'], ['bird', '鸟'], ['fish', '鱼'],
+    ['horse', '马'], ['cow', '奶牛'], ['tree', '树'], ['flower', '花'],
+    ['sun', '太阳'], ['moon', '月亮']
+  ]},
+  { id: 16, title: '日常物品', words: [
+    ['book', '书'], ['pen', '钢笔'], ['paper', '纸'], ['table', '桌子'],
+    ['chair', '椅子'], ['door', '门'], ['window', '窗户'], ['bed', '床'],
+    ['cup', '杯子'], ['bottle', '瓶子']
+  ]},
+  { id: 17, title: '衣服与穿戴', words: [
+    ['shirt', '衬衫'], ['shoe', '鞋'], ['hat', '帽子'], ['coat', '外套'],
+    ['dress', '连衣裙'], ['sock', '袜子'], ['glove', '手套'], ['cloth', '布/衣服'],
+    ['gold', '黄金'], ['silver', '银']
+  ]},
+  { id: 18, title: '地点与建筑', words: [
+    ['house', '房子'], ['school', '学校'], ['hospital', '医院'], ['store', '商店'],
+    ['street', '街道'], ['road', '路'], ['bridge', '桥'], ['garden', '花园'],
+    ['room', '房间'], ['wall', '墙']
+  ]},
+  { id: 19, title: '数字与量词', words: [
+    ['one', '一'], ['two', '二'], ['three', '三'], ['four', '四'],
+    ['five', '五'], ['many', '很多'], ['some', '一些'], ['all', '全部'],
+    ['much', '许多'], ['little', '少量']
+  ]},
+  { id: 20, title: '综合复习', words: [
+    ['think', '思考'], ['know', '知道'], ['help', '帮助'], ['work', '工作'],
+    ['play', '玩'], ['love', '爱'], ['hope', '希望'], ['thank', '感谢'],
+    ['please', '请'], ['sorry', '对不起']
+  ]}
+];
+
+// ======== App State ========
+let state = {
+  xp: 0,
+  streak: 0,
+  lastActive: null,
+  completedLessons: {},
+  currentLesson: null,
+  currentExercise: 0,
+  hearts: 5,
+  correct: 0,
+  wrong: 0,
+  totalExercises: 0,
+  answered: false,
+  earnedThisLesson: 0
+};
+
+// ======== Load/Save ========
+function loadState() {
+  try {
+    const saved = localStorage.getItem('basicEnglishState');
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      Object.assign(state, parsed);
+      checkStreak();
+    }
+  } catch(e) {}
+}
+
+function saveState() {
+  try {
+    localStorage.setItem('basicEnglishState', JSON.stringify(state));
+  } catch(e) {}
+}
+
+function checkStreak() {
+  if (!state.lastActive) return;
+  const last = new Date(state.lastActive);
+  const now = new Date();
+  const diffDays = Math.floor((now - last) / (1000*60*60*24));
+  if (diffDays > 1) state.streak = 0;
+  else if (diffDays === 1) state.streak += 1;
+}
+
+// ======== XP System ========
+function getLevel(xp) { return Math.floor(xp / 100) + 1; }
+function getLevelProgress(xp) { return (xp % 100) / 100 * 100; }
+
+// ======== UI Updates ========
+function updateHeader() {
+  const xp = state.xp;
+  document.getElementById('xpDisplay').textContent = xp;
+  document.getElementById('streakDisplay').textContent = state.streak;
+  document.getElementById('levelDisplay').textContent = 'Lv.' + getLevel(xp);
+  document.getElementById('homeXp').textContent = xp;
+  document.getElementById('homeStreak').textContent = state.streak;
+  const done = Object.values(state.completedLessons).filter(v => v).length;
+  document.getElementById('homeLessons').textContent = done + '/' + LESSONS.length;
+}
+
+function renderLessonMap() {
+  const container = document.getElementById('lessonMap');
+  let html = '';
+  LESSONS.forEach((lesson, i) => {
+    const completed = state.completedLessons[lesson.id];
+    const prevCompleted = i === 0 || state.completedLessons[LESSONS[i-1].id];
+    const locked = !prevCompleted && !completed;
+    let cls = 'lesson-node';
+    if (locked) cls += ' locked';
+    else if (completed) cls += ' completed';
+    else cls += ' current';
+    const icon = completed ? '&#10003;' : locked ? '&#128274;' : (i+1);
+    const progress = completed ? 100 : 0;
+    html += '<div class="' + cls + '" onclick="' + (locked ? '' : 'startLesson('+lesson.id+')') + '">';
+    html += '<div class="lesson-icon">' + icon + '</div>';
+    html += '<div class="lesson-info"><h4>' + lesson.title + '</h4>';
+    html += '<p>' + lesson.words.length + ' 个单词';
+    if (completed) html += ' &#10003; 已完成';
+    html += '</p>';
+    if (completed) html += '<div class="progress-bar"><div class="progress-fill" style="width:100%"></div></div>';
+    html += '</div>';
+    html += '<span class="lesson-arrow">&#8250;</span></div>';
+  });
+  container.innerHTML = html;
+}
+
+// ======== Lesson Logic ========
+function startLesson(id) {
+  state.currentLesson = LESSONS.find(l => l.id === id);
+  if (!state.currentLesson) return;
+  state.currentExercise = 0;
+  state.hearts = 5;
+  state.correct = 0;
+  state.wrong = 0;
+  state.answered = false;
+  state.earnedThisLesson = 0;
+  state.totalExercises = state.currentLesson.words.length * 3;
+  showScreen('lessonScreen');
+  updateLessonUI();
+  showExercise();
+}
+
+function quitLesson() {
+  state.currentLesson = null;
+  showScreen('homeScreen');
+  updateHeader();
+  renderLessonMap();
+}
+
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+function updateLessonUI() {
+  if (!state.currentLesson) return;
+  document.getElementById('lessonTitle').textContent = state.currentLesson.title;
+  const progress = (state.currentExercise / state.totalExercises) * 100;
+  document.getElementById('lessonProgress').style.width = Math.min(progress, 100) + '%';
+  const hearts = document.querySelectorAll('.heart');
+  hearts.forEach((h, i) => {
+    h.classList.toggle('lost', i >= state.hearts);
+  });
+}
+
+function showExercise() {
+  if (!state.currentLesson) return;
+  state.answered = false;
+  updateLessonUI();
+
+  const words = state.currentLesson.words;
+  const total = state.totalExercises;
+  const exNum = state.currentExercise;
+
+  if (exNum >= total || state.hearts <= 0) {
+    showResult();
+    return;
+  }
+
+  const wordIdx = Math.floor(exNum / 3) % words.length;
+  const exType = exNum % 3;
+  const word = words[wordIdx];
+  const english = word[0];
+  const chinese = word[1];
+
+  const container = document.getElementById('exerciseContainer');
+
+  if (exType === 0) {
+    // English -> Chinese
+    const distractors = getDistractors(chinese, words);
+    const choices = shuffle([chinese, ...distractors]).slice(0, 4);
+    container.innerHTML = renderChoiceExercise('选择正确的中文翻译', english, choices, chinese);
+    speakWord(english);
+  } else if (exType === 1) {
+    // Chinese -> English
+    const distractors = getDistractors(english, words);
+    const choices = shuffle([english, ...distractors]).slice(0, 4);
+    container.innerHTML = renderChoiceExercise('选择正确的英文单词', chinese, choices, english);
+  } else {
+    // Writing
+    container.innerHTML = renderWritingExercise(chinese, english);
+    setTimeout(() => document.getElementById('wordInput')?.focus(), 100);
+  }
+}
+
+function getDistractors(correct, words) {
+  const others = words.filter(w => w[0] !== correct && w[1] !== correct).map(w => w[0]);
+  // Also grab from other lessons
+  const all = LESSONS.flatMap(l => l.words.map(w => w[0]));
+  const pool = shuffle(all.filter(w => w !== correct));
+  return pool.slice(0, 6);
+}
+
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length-1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i+1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function renderChoiceExercise(prompt, word, choices, correct) {
+  let html = '<div class="exercise-card">';
+  html += '<div class="exercise-prompt">';
+  html += '<div class="label">' + prompt + '</div>';
+  html += '<div class="word">' + word + '</div>';
+  html += '<button class="listen-btn" onclick="speakWord(\'' + word + '\')">&#128264; 听发音</button>';
+  html += '</div>';
+  html += '<div class="choices">';
+  choices.forEach(c => {
+    html += '<button class="choice-btn" data-value="' + c + '" onclick="checkChoice(this, \'' + correct + '\')">' + c + '</button>';
+  });
+  html += '</div></div>';
+  html += '<button class="next-btn primary" disabled id="nextExerciseBtn" onclick="nextExercise()">继续</button>';
+  return html;
+}
+
+function renderWritingExercise(chinese, english) {
+  let html = '<div class="exercise-card">';
+  html += '<div class="exercise-prompt">';
+  html += '<div class="label">输入英文翻译</div>';
+  html += '<div class="word">' + chinese + '</div>';
+  html += '<button class="listen-btn" onclick="speakWord(\'' + english + '\')">&#128264; 听答案</button>';
+  html += '</div>';
+  html += '<div class="writing-area">';
+  html += '<input type="text" class="writing-input" id="wordInput" placeholder="输入英文..." onkeydown="checkWriting(event)" autocomplete="off">';
+  html += '<button class="submit-btn" id="submitWritingBtn" onclick="submitWriting()">&#10003; 确认</button>';
+  html += '</div></div>';
+  html += '<button class="next-btn primary" disabled id="nextExerciseBtn" onclick="nextExercise()">继续</button>';
+  return html;
+}
+
+function speakWord(word) {
+  if ('speechSynthesis' in window) {
+    const utter = new SpeechSynthesisUtterance(word);
+    utter.lang = 'en-US';
+    utter.rate = 0.9;
+    window.speechSynthesis.cancel();
+    window.speechSynthesis.speak(utter);
+  }
+}
+
+function checkChoice(btn, correct) {
+  if (state.answered) return;
+  state.answered = true;
+  const value = btn.dataset.value;
+  const isCorrect = value === correct;
+  const allBtns = document.querySelectorAll('.choice-btn');
+
+  allBtns.forEach(b => b.disabled = true);
+  btn.classList.add(isCorrect ? 'correct' : 'wrong');
+  if (!isCorrect) {
+    document.getElementById('submitWritingBtn').disabled = true;
+    allBtns.forEach(b => { if (b.dataset.value === correct) b.classList.add('reveal'); });
+  }
+  handleResult(isCorrect);
+}
+
+function checkWriting(event) {
+  if ((!event || event.key === 'Enter') && !state.answered) {
+    submitWriting();
+  }
+}
+
+function submitWriting() {
+  if (state.answered) return;
+  state.answered = true;
+  const input = document.getElementById('wordInput');
+  if (!input) return;
+  const val = input.value.trim().toLowerCase();
+  const words = state.currentLesson.words;
+  const wordIdx = Math.floor(state.currentExercise / 3) % words.length;
+  const correct = words[wordIdx][0].toLowerCase();
+  const isCorrect = val === correct;
+  if (!val && correct) { input.value = correct; }
+  input.classList.add(isCorrect ? 'correct' : 'wrong');
+  input.disabled = true;
+  const btn = document.getElementById('submitWritingBtn');
+  if (btn) btn.disabled = true;
+  if (!isCorrect) input.value = correct;
+  handleResult(isCorrect);
+}
+
+function handleResult(isCorrect) {
+  if (isCorrect) {
+    state.correct++;
+    state.earnedThisLesson += 10;
+    state.xp += 10;
+  } else {
+    state.wrong++;
+    state.hearts--;
+  }
+  updateLessonUI();
+  document.getElementById('nextExerciseBtn').disabled = false;
+  saveState();
+  updateHeader();
+}
+
+function nextExercise() {
+  if (state.hearts <= 0) {
+    showResult();
+    return;
+  }
+  state.currentExercise++;
+  if (state.currentExercise >= state.totalExercises) {
+    showResult();
+  } else {
+    showExercise();
+  }
+}
+
+function showResult() {
+  const overlay = document.getElementById('resultOverlay');
+  const passed = state.correct >= state.totalExercises * 0.6;
+  document.getElementById('resultIcon').textContent = passed ? '&#127881;' : '&#128170;';
+  document.getElementById('resultLabel').textContent = passed ? '太棒了！继续加油！' : '再接再厉！';
+  document.getElementById('correctCount').textContent = state.correct;
+  document.getElementById('wrongCount').textContent = state.wrong;
+  document.getElementById('xpEarned').textContent = '+' + state.earnedThisLesson + ' XP';
+  overlay.classList.add('show');
+
+  if (passed) {
+    state.completedLessons[state.currentLesson.id] = true;
+    saveState();
+    updateHeader();
+    spawnConfetti();
+  }
+}
+
+function closeResult() {
+  document.getElementById('resultOverlay').classList.remove('show');
+  quitLesson();
+}
+
+function spawnConfetti() {
+  const container = document.getElementById('confettiContainer');
+  const colors = ['#ff6b6b', '#feca57', '#48dbfb', '#ff9ff3', '#54a0ff', '#5f27cd'];
+  for (let i = 0; i < 40; i++) {
+    const el = document.createElement('div');
+    el.className = 'confetti-piece';
+    el.style.color = colors[Math.floor(Math.random() * colors.length)];
+    el.style.background = colors[Math.floor(Math.random() * colors.length)];
+    el.style.borderRadius = Math.random() > 0.5 ? '50%' : '2px';
+    el.style.left = (10 + Math.random() * 80) + '%';
+    el.style.top = (30 + Math.random() * 30) + '%';
+    el.style.animationDelay = (Math.random() * 0.5) + 's';
+    el.style.animationDuration = (1 + Math.random()) + 's';
+    el.style.transform = 'rotate(' + (Math.random() * 360) + 'deg)';
+    container.appendChild(el);
+  }
+  setTimeout(() => container.innerHTML = '', 3000);
+}
+
+// ======== Init ========
+loadState();
+updateHeader();
+renderLessonMap();
+
+// Daily check - mark last active
+if (window.location) {
+  state.lastActive = new Date().toISOString();
+  saveState();
+}
+</script>
+</body>
+</html>
